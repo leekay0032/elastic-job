@@ -18,7 +18,7 @@
 package com.dangdang.ddframe.job.cloud.scheduler.restful;
 
 import com.dangdang.ddframe.job.cloud.scheduler.mesos.MesosStateService;
-import com.dangdang.ddframe.job.cloud.scheduler.producer.ProducerManager;
+import com.dangdang.ddframe.job.cloud.scheduler.mesos.ReconcileService;
 import com.dangdang.ddframe.job.reg.base.CoordinatorRegistryCenter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -40,7 +40,7 @@ import javax.ws.rs.QueryParam;
 @Slf4j
 public final class CloudOperationRestfulApi {
     
-    private static ProducerManager producerManager;
+    private static ReconcileService reconcileService;
     
     private static final long RECONCILE_MILLIS_INTERVAL = 10 * 1000L;
     
@@ -51,29 +51,23 @@ public final class CloudOperationRestfulApi {
     /**
      * 初始化.
      * 
-     * @param producerManager 生产管理器
+     * @param regCenter 注册中心
+     * @param reconcileService 协调服务
      */
-    public static void init(final CoordinatorRegistryCenter regCenter, final ProducerManager producerManager) {
-        CloudOperationRestfulApi.producerManager = producerManager;
+    public static void init(final CoordinatorRegistryCenter regCenter, final ReconcileService reconcileService) {
+        CloudOperationRestfulApi.reconcileService = reconcileService;
         CloudOperationRestfulApi.mesosStateService = new MesosStateService(regCenter);
     }
     
     /**
      * 显示协调服务.
      * 
-     * @param taskId 可选参数,如果存在taskId那么只针对该task进行协调.如果不传入taskId,对所有的服务进行协调
      */
     @POST
     @Path("/reconcile/explicit")
-    public void explicitReconcile(@QueryParam("taskId") final String taskId) {
-        synchronized (CloudOperationRestfulApi.class) {
-            validReconcileInterval();
-            if (Strings.isNullOrEmpty(taskId)) {
-                producerManager.explicitReconcile();
-            } else {
-                producerManager.explicitReconcile(taskId);
-            }
-        }
+    public void explicitReconcile() {
+        validReconcileInterval();
+        reconcileService.explicitReconcile();
     }
     
     /**
@@ -82,10 +76,8 @@ public final class CloudOperationRestfulApi {
     @POST
     @Path("/reconcile/implicit")
     public void implicitReconcile() {
-        synchronized (CloudOperationRestfulApi.class) {
-            validReconcileInterval();
-            producerManager.implicitReconcile();
-        }
+        validReconcileInterval();
+        reconcileService.implicitReconcile();
     }
     
     private void validReconcileInterval() {
@@ -100,6 +92,7 @@ public final class CloudOperationRestfulApi {
      *
      * @param appName 云作业App配置名称
      * @return 沙箱信息
+     * @throws JSONException JSON解析异常
      */
     @GET
     @Path("/sandbox")

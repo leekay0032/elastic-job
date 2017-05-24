@@ -1,5 +1,6 @@
 $(function() {
     $("#job-name").text($("#index-job-name").text());
+    authorityControl();
     renderShardingTable();
     renderBreadCrumbMenu();
     bindButtons();
@@ -13,10 +14,16 @@ function renderShardingTable() {
         columns: [
             {
                 field: "item",
-                title: "分片项"
+                title: "分片项",
+                sortable: "true"
             }, {
                 field: "serverIp",
-                title: "服务器IP"
+                title: "服务器IP",
+                sortable: "true"
+            }, {
+                field: "instanceId",
+                title: "进程ID",
+                sortable: "true"
             }, {
                 field: "status",
                 title: "状态",
@@ -40,9 +47,6 @@ function shardingStatusFormatter(value, row) {
             break;
         case "RUNNING":
             return "<span class='label label-primary'>运行中</span>";
-            break;
-        case "COMPLETED":
-            return "<span class='label label-success'>已完成</span>";
             break;
         case "SHARDING_ERROR":
             return "<span class='label label-info'>分片调整中</span>";

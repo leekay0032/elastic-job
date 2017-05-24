@@ -1,4 +1,6 @@
 $(function() {
+    authorityControl();
+    renderJobOverview();
     $("#add-job").click(function() {
         $(".box-body").remove();
         $("#add-job-body").load("html/job/add_job.html");
@@ -11,12 +13,50 @@ $(function() {
     bindDisableJobButton();
 });
 
+function renderJobOverview() {
+    var jsonData = {
+        url: "/api/job/jobs",
+        cache: false,
+        columns:
+            [{
+                field: "jobName",
+                title: "作业名",
+                sortable: "true"
+            }, {
+                field: "appName",
+                title: "应用名",
+                sortable: "true"
+            }, {
+                field: "jobClass",
+                title: "作业实现类",
+                sortable: "true"
+            }, {
+                field: "shardingTotalCount",
+                title: "分片总数",
+                sortable: "true"
+            }, {
+                field: "cron",
+                title: "cron表达式",
+                sortable: "true"
+            }, {
+                field: "operation",
+                title: "操作",
+                formatter: "operationJob"
+            }]
+    };
+    $("#job-table").bootstrapTable({
+        columns: jsonData.columns,
+        url: jsonData.url,
+        cache: jsonData.cache
+    });
+}
+
 function operationJob(val, row) {
-    var detailButton = "<button operation='detailJob' class='btn btn-info' jobName='" + row.jobName + "'>详情</button>";
-    var modifyButton = "<button operation='modifyJob' class='btn btn-warning' jobName='" + row.jobName + "'>修改</button>";
-    var deleteButton = "<button operation='deleteJob' class='btn btn-danger' jobName='" + row.jobName + "'>删除</button>";
-    var enableButton = "<button operation='enableJob' class='btn btn-success' jobName='" + row.jobName + "'>生效</button>";
-    var disableButton = "<button operation='disableJob' class='btn btn-warning' jobName='" + row.jobName + "'>失效</button>";
+    var detailButton = "<button operation='detailJob' class='btn-xs btn-info' jobName='" + row.jobName + "'>详情</button>";
+    var modifyButton = "<button operation='modifyJob' class='btn-xs btn-warning' jobName='" + row.jobName + "'>修改</button>";
+    var deleteButton = "<button operation='deleteJob' class='btn-xs btn-danger' jobName='" + row.jobName + "'>删除</button>";
+    var enableButton = "<button operation='enableJob' class='btn-xs btn-success' jobName='" + row.jobName + "' appName='" + row.appName + "'>生效</button>";
+    var disableButton = "<button operation='disableJob' class='btn-xs btn-warning' jobName='" + row.jobName + "'  >失效</button>";
     var operationId = detailButton + "&nbsp;" + modifyButton  +"&nbsp;" + deleteButton;
     if(selectJobStatus(row.jobName)) {
         operationId = operationId + "&nbsp;" + enableButton;
@@ -41,6 +81,7 @@ function selectJobStatus(jobName) {
 }
 
 function bindDetailJobButton() {
+    $(document).off("click", "button[operation='detailJob'][data-toggle!='modal']");
     $(document).on("click", "button[operation='detailJob'][data-toggle!='modal']", function(event) {
         var jobName = $(event.currentTarget).attr("jobName");
         $.ajax({
@@ -66,6 +107,7 @@ function bindDetailJobButton() {
 }
 
 function bindDeleteJobButton() {
+    $(document).off("click", "button[operation='deleteJob'][data-toggle!='modal']");
     $(document).on("click", "button[operation='deleteJob'][data-toggle!='modal']", function(event) {
         var jobName = $(event.currentTarget).attr("jobName");
         $("#delete-data").modal({backdrop : "static", keyboard : true});
@@ -83,6 +125,7 @@ function bindDeleteJobButton() {
                     success: function(result) {
                         $("#job-table").bootstrapTable("refresh");
                         $("#delete-data").hide();
+                        refreshJobNavTag();
                     }
                 });
             }
@@ -91,6 +134,7 @@ function bindDeleteJobButton() {
 }
 
 function bindModifyJobButton() {
+    $(document).off("click", "button[operation='modifyJob'][data-toggle!='modal']");
     $(document).on("click", "button[operation='modifyJob'][data-toggle!='modal']", function(event) {
         var jobName = $(event.currentTarget).attr("jobName");
         $.ajax({
@@ -109,21 +153,28 @@ function bindModifyJobButton() {
 }
 
 function bindEnableJobButton() {
+    $(document).off("click", "button[operation='enableJob'][data-toggle!='modal']");
     $(document).on("click", "button[operation='enableJob'][data-toggle!='modal']", function(event) {
         var jobName = $(event.currentTarget).attr("jobName");
-        $.ajax({
-            url: "/api/job/" + jobName + "/disable",
-            type: "DELETE",
-            contentType: "application/json",
-            success: function(result) {
-                $("#job-table").bootstrapTable("refresh");
-                showSuccessDialog();
-            }
-        });
+        var appName = $(event.currentTarget).attr("appName");
+        if(selectAppStatus(appName)){
+            showFailDialog();
+        } else {
+            $.ajax({
+                url: "/api/job/" + jobName + "/disable",
+                type: "DELETE",
+                contentType: "application/json",
+                success: function(result) {
+                    $("#job-table").bootstrapTable("refresh");
+                    showSuccessDialog();
+                }
+            });
+        }
     });
 }
 
 function bindDisableJobButton() {
+    $(document).off("click", "button[operation='disableJob'][data-toggle!='modal']");
     $(document).on("click", "button[operation='disableJob'][data-toggle!='modal']", function(event) {
         var jobName = $(event.currentTarget).attr("jobName");
         $.ajax({
@@ -175,3 +226,4 @@ function renderJob(job) {
         $("#bootstrap-script-div").show();
     }
 }
+

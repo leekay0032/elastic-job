@@ -8,11 +8,12 @@ $(function() {
 });
 
 function queryParams(params) {
+    var sortName = "success" === params.sortName ? "isSuccess" : params.sortName;
     return {
         per_page: params.pageSize, 
         page: params.pageNumber,
         q: params.searchText,
-        sort: params.sortName,
+        sort: sortName,
         order: params.sortOrder,
         jobName: $("#job-name").val(),
         taskId: $("#task-id").val(),
@@ -27,10 +28,20 @@ function successFormatter(value) {
     switch(value)
     {
     case true:
-      return "Y";
+      return "<span class='label label-success'>成功</span>";
     case false:
-        return "N";
+        return "<span class='label label-danger'>失败</span>";
     default:
-      return "N/A";
+      return "空";
     }
+}
+
+function splitFormatter(value) {
+    var maxLength = 50;
+    var replacement = "...";
+    if(null != value && value.length > maxLength) {
+        var vauleDetail = value.substring(0 , maxLength - replacement.length) + replacement;
+        return '<a href="javascript: void(0);" style="color:#FF0000;" onClick="showHistoryMessage(\'' + value.replace(/\n/g,"<br/>") + '\')">' + vauleDetail + '</a>';
+    }
+    return value;
 }

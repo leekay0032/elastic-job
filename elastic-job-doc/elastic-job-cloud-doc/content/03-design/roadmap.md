@@ -4,7 +4,7 @@ date = "2016-12-06T22:38:50+08:00"
 title = "未来线路规划"
 weight = 4
 prev = "/03-design/module/"
-next = "/00-overview/index/"
+next = "/00-overview"
 +++
 
 ## Core
@@ -50,7 +50,7 @@ next = "/00-overview/index/"
 - [x] Lifecycle Management
     - [x] Job Add/Remove
     - [ ] Job Pause/Resume
-    - [ ] Job Disable/Enable
+    - [x] Job Disable/Enable
     - [ ] Job Shutdown
     - [x] App Add/Remove
     - [x] App Disable/Enable

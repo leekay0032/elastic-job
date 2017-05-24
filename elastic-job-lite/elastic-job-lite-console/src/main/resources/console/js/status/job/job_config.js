@@ -3,6 +3,19 @@ $(function() {
     bindSubmitJobSettingsForm();
 });
 
+function getJobParams() {
+    var jobName = $("#job-overviews-name").text();
+    var jobParams;
+    $.ajax({
+        url: "/api/jobs/config/" + jobName,
+        async: false,
+        success: function(data) {
+            jobParams = data;
+        }
+    });
+    return jobParams;
+}
+
 function bindSubmitJobSettingsForm() {
     $("#update-job-info-btn").on("click", function(){
         var bootstrapValidator = $("#job-config-form").data("bootstrapValidator");
@@ -31,20 +44,34 @@ function bindSubmitJobSettingsForm() {
             var executorServiceHandler = $("#executor-service-handler").val();
             var jobExceptionHandler = $("#job-exception-handler").val();
             var description = $("#description").val();
-            var reconcileCycleTime = $("#reconcile-cycle-time").val();
-            var postJson = {jobName: jobName, jobType : jobType, jobClass : jobClass, shardingTotalCount: shardingTotalCount, jobParameter: jobParameter, cron: cron, streamingProcess: streamingProcess, maxTimeDiffSeconds: maxTimeDiffSeconds, monitorPort: monitorPort, monitorExecution: monitorExecution, failover: failover, misfire: misfire, shardingItemParameters: shardingItemParameters, jobShardingStrategyClass: jobShardingStrategyClass, jobProperties: {"executor_service_handler": executorServiceHandler, "job_exception_handler": jobExceptionHandler}, description: description, scriptCommandLine: scriptCommandLine, reconcileCycleTime:reconcileCycleTime};
-            $.ajax({
-                url: "/api/jobs/config",
-                type: "PUT",
-                data: JSON.stringify(postJson),
-                contentType: "application/json",
-                dataType: "json",
-                success: function() {
-                    showSuccessDialog();
-                    $("#data-update-job").modal("hide");
-                    $("#jobs-status-overview-tbl").bootstrapTable("refresh");
-                }
-            });
+            var reconcileIntervalMinutes = $("#reconcile-interval-minutes").val();
+            var postJson = {jobName: jobName, jobType : jobType, jobClass : jobClass, shardingTotalCount: shardingTotalCount, jobParameter: jobParameter, cron: cron, streamingProcess: streamingProcess, maxTimeDiffSeconds: maxTimeDiffSeconds, monitorPort: monitorPort, monitorExecution: monitorExecution, failover: failover, misfire: misfire, shardingItemParameters: shardingItemParameters, jobShardingStrategyClass: jobShardingStrategyClass, jobProperties: {"executor_service_handler": executorServiceHandler, "job_exception_handler": jobExceptionHandler}, description: description, scriptCommandLine: scriptCommandLine, reconcileIntervalMinutes:reconcileIntervalMinutes};
+            var jobParams = getJobParams();
+            if (jobParams.monitorExecution !== monitorExecution || jobParams.failover !== failover || jobParams.misfire !== misfire) {
+                showUpdateConfirmModal();
+                $(document).off("click", "#confirm-btn");
+                $(document).on("click", "#confirm-btn", function() {
+                    $("#confirm-dialog").modal("hide");
+                    submitAjax(postJson);
+                });
+            } else {
+                submitAjax(postJson);
+            }
+        }
+    });
+}
+
+function submitAjax(postJson) {
+    $.ajax({
+        url: "/api/jobs/config",
+        type: "PUT",
+        data: JSON.stringify(postJson),
+        contentType: "application/json",
+        dataType: "json",
+        success: function() {
+            $("#data-update-job").modal("hide");
+            $("#jobs-status-overview-tbl").bootstrapTable("refresh");
+            showSuccessDialog();
         }
     });
 }

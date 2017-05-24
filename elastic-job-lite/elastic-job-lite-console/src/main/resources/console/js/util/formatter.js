@@ -35,11 +35,7 @@ function dateTimeFormatter(value) {
     return new Date(value).format("yyyy-MM-dd HH:mm:ss");
 }
 
-function splitFormatter(value) {
-    var maxLength = 50;
-    var replacement = "...";
-    if(null != value && value.length > maxLength) {
-        return "<div title ='" + value + "'>" + value.substring(0 , maxLength - replacement.length) + replacement + "</div>";
-    }
-    return value;
+function showHistoryMessage(value) {
+    $("#history-message").html(value);
+    $("#history-message-modal").modal("show");
 }
